@@ -8,7 +8,13 @@ const PORT = 3001;
 app.use(cors());
 app.use(express.json());
 
-// API endpoint to execute Copilot CLI commands
+// WARNING: This endpoint executes arbitrary CLI commands for demonstration purposes.
+// In production, you should:
+// - Implement authentication and authorization
+// - Add rate limiting
+// - Whitelist allowed commands
+// - Sanitize and validate all inputs
+// - Run commands in a sandboxed environment
 app.post('/api/execute', (req, res) => {
   const { command } = req.body;
 
@@ -25,20 +31,20 @@ app.post('/api/execute', (req, res) => {
   let errorOutput = '';
 
   // Execute the command
-  const process = spawn(cliCommand, args, {
+  const childProcess = spawn(cliCommand, args, {
     shell: true,
     cwd: process.cwd()
   });
 
-  process.stdout.on('data', (data) => {
+  childProcess.stdout.on('data', (data) => {
     output += data.toString();
   });
 
-  process.stderr.on('data', (data) => {
+  childProcess.stderr.on('data', (data) => {
     errorOutput += data.toString();
   });
 
-  process.on('close', (code) => {
+  childProcess.on('close', (code) => {
     if (code !== 0) {
       return res.json({
         success: false,
@@ -53,7 +59,7 @@ app.post('/api/execute', (req, res) => {
     });
   });
 
-  process.on('error', (error) => {
+  childProcess.on('error', (error) => {
     res.json({
       success: false,
       output: `Error executing command: ${error.message}`,
